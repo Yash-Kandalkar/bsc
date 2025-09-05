@@ -1,0 +1,68 @@
+#Semantic segmentation and object detection using fcn/frcnn/mask r cnn
+import torch
+import torchvision
+from torchvision import transforms
+import matplotlib.pyplot as plt
+from PIL import Image
+
+# Load pre-trained models for segmentation and detection
+fcn_model = torchvision.models.segmentation.fcn_resnet50(pretrained=True)
+fcn_model.eval()
+faster_rcnn_model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
+faster_rcnn_model.eval()
+
+# Function to process and show images with FCN segmentation and Faster-RCNN detection
+def process_image(image, model_fcn, model_frcnn):
+  transform = transforms.Compose([
+      transforms.ToTensor(),   # Convert the image to a PyTorch tensor
+  ])
+
+  image_tensor = transform(image)
+  # FCN Semantic Segmentation
+  with torch.no_grad():
+    output_fcn = model_fcn(image_tensor.unsqueeze(0))  # Add batch dimension
+    output_fcn_predictions = output_fcn['out'].argmax(1).squeeze().cpu().numpy()
+
+  # Faster R-CNN Object Detection
+  with torch.no_grad():
+    output_frcnn = model_frcnn([image_tensor])
+
+  # Extract boxes and labe;s from Faster R-CNN output
+  boxes = output_frcnn[0]['boxes'].cpu().numpy()
+  labels = output_frcnn[0]['labels'].cpu().numpy()
+
+  # Plot the original image, FCN segmentation output, and Faster R-CNN detections
+  fig, ax = plt.subplots(1, 3, figsize=(15, 5))
+
+  # Original Image
+  ax[0].imshow(image)
+  ax[0].set_title('Original Image')
+  ax[0].axis('off')
+
+  # FCN Segmentation Output
+  ax[1].imshow(output_fcn_predictions)
+  ax[1].set_title('FCN Segmentation Output')
+  ax[1].axis('off')
+
+  # Faster R-CNN Object Detection
+  ax[2].imshow(image)
+  for box in boxes:
+    x_min, y_min, x_max, y_max = box
+    rect = plt.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, fill=False, color='red', linewidth=2)
+    ax[2].add_patch(rect)
+  ax[2].set_title('Faster R-CNN Object Detection')
+  ax[2].axis('off')
+
+  plt.tight_layout()
+  plt.show()
+
+# Load your images
+room_image = Image.open('/road.jpg')
+road1_image = Image.open('/road1.jpg')
+road2_image = Image.open('/room.jpeg')
+
+# Process each image with the models
+process_image(room_image, fcn_model, faster_rcnn_model)
+process_image(road1_image, fcn_model, faster_rcnn_model)
+process_image(road2_image, fcn_model, faster_rcnn_model)
+
