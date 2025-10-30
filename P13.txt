@@ -1,0 +1,29 @@
+#music
+import torch, torchaudio
+from transformers import AutoProcessor, MusicgenForConditionalGeneration
+
+# Load the pre-trained MusicGen model
+MODEL = "facebook/musicgen-small"
+processor = AutoProcessor.from_pretrained(MODEL)
+model = MusicgenForConditionalGeneration.from_pretrained(MODEL)
+
+# 🎵 Text prompt for generating music
+prompt = "an Indian classical music performance with sitar and tabla, gentle rhythm and melodic improvisation"
+
+# Prepare input
+inputs = processor(text=[prompt], return_tensors="pt")
+
+# Configure generation parameters
+model.generation_config.do_sample = True
+model.generation_config.guidance_scale = 3.0       # creativity vs prompt adherence
+model.generation_config.max_new_tokens = 50 * 18   # 50 tokens/sec → 18 sec of audio
+
+# Generate music
+audio_values = model.generate(**inputs)
+
+# Get sampling rate
+sr = model.config.audio_encoder.sampling_rate
+
+# Save generated audio
+torchaudio.save("text_music.wav", audio_values[0].cpu(), sr)
+print("Saved text_music.wav")

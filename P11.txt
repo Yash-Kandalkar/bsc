@@ -1,0 +1,35 @@
+#diffusion
+# Install required libraries
+!pip install diffusers
+!pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+!pip install transformers --upgrade
+!pip install pillow
+!pip install accelerate
+!pip install safetensors
+
+from diffusers import StableDiffusionPipeline
+import torch
+from IPython.display import display
+
+# Load the Stable Diffusion model
+model = StableDiffusionPipeline.from_pretrained("CompVis/stable-diffusion-v1-4")
+
+# Use GPU if available, else use CPU
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model.to(device)
+
+# Generate image in Van Gogh style
+prompt = "A beautiful landscape painting in the style of Van Gogh"
+image = model(prompt).images[0]
+display(image)
+
+# Generate image in M. F. Hussain style
+prompt = "A beautiful painting in M F Hussain style"
+image = model(prompt).images[0]
+display(image)
+
+# Generate fantasy castle image
+prompt = "A fantasy castle in the clouds, ultra-detailed"
+image = model(prompt).images[0]
+display(image)
+
